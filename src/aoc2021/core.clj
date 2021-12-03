@@ -29,10 +29,21 @@
    )
   )
 
+(defn calc-increases-sliding
+  [input]
+  (->>
+   input
+   (partition 3 1)
+   (map #(apply + %))
+   (calc-increases)
+   )
+  )
+
 (defn -main
   "Advent of Code 2021."
   [& args]
   (let [input (read-input "resources/input_1.txt")]
     (println "1.1 number of increases = " (calc-increases input))
+    (println "1.2 number of increases = " (calc-increases-sliding input))
     )
   )
