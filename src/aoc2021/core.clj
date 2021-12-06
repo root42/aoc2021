@@ -86,6 +86,44 @@
    )
   )
 
+;; Day 3
+(defn add-digit
+  [n input]
+  (->>
+   input
+   (map #(bit-and 1 (bit-shift-right % n)))
+   (reduce +))
+  )
+
+(defn calc-gamma
+  [input]
+  (let [bitcount 
+        (loop [bits (range 0 13)
+               cur 0
+               counts [0 0 0 0 0 0 0 0 0 0 0 0]]
+          (if (= (count bits) 0)
+            counts
+            (recur (drop 1 bits)
+                   (first bits)
+                   (assoc counts cur (add-digit cur input))))
+          )
+        len (count input)]
+    (Integer/parseUnsignedInt (clojure.string/reverse (apply str (map #(if (> % (/ len 2)) "1" "0") bitcount))) 2)
+    )
+  )
+
+(defn calc-power
+  [input]
+  (let [gamma (->>
+               input
+               (map #(Integer/parseUnsignedInt % 2))
+               (calc-gamma)
+               )
+        epsilon (bit-and (bit-not gamma) 2r111111111111)]
+    (* gamma epsilon)
+    )
+  )
+
 (defn -main
   "Advent of Code 2021."
   [& args]
@@ -96,5 +134,9 @@
   (let [input (read-input "resources/input_2.txt")]
     (println "2.1 horizontal position * depth = " (calc-depth input))
     (println "2.2 horizontal position * depth = " (calc-aim input))
+    )
+  (let [input (read-input "resources/input_3.txt")]
+    (println "3.1 Power consumption = " (calc-power input))
+    ;; (println "2.2 horizontal position * depth = " (calc-aim input))
     )
   )
