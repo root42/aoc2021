@@ -86,7 +86,7 @@
    )
   )
 
-;; Day 3
+;; Day 3.1
 (defn add-digit
   [n input]
   (->>
@@ -96,33 +96,65 @@
   )
 
 (defn calc-gamma
-  [input]
-  (let [bitcount 
-        (loop [bits (range 0 13)
-               cur 0
-               counts [0 0 0 0 0 0 0 0 0 0 0 0]]
-          (if (= (count bits) 0)
-            counts
-            (recur (drop 1 bits)
-                   (first bits)
-                   (assoc counts cur (add-digit cur input))))
-          )
-        len (count input)]
-    (Integer/parseUnsignedInt (clojure.string/reverse (apply str (map #(if (> % (/ len 2)) "1" "0") bitcount))) 2)
-    )
+  "Calculates the gamma value and returns it as a vector of 1s and 0s."
+  [N keep input]
+  (loop [bits (range 0 (inc N))
+         cur 0
+         counts (vec (repeat N 0))]
+    (if (= (count bits) 0)
+      (reverse (map #(if (>= % (/ (count input) 2)) keep (- 1 keep)) counts))
+      (recur (drop 1 bits)
+             (first bits)
+             (assoc counts cur (add-digit cur input))))))
+
+(defn binvec-to-uint
+  "Converts a vector of 1s and 0s to an unsigned integer"
+  [v]
+  (Integer/parseUnsignedInt (apply str v) 2)
   )
+
+(defn pow
+  [x n]
+  (reduce * (repeat n x)))
 
 (defn calc-power
   [input]
-  (let [gamma (->>
+  (let [num-bits (count (first input))
+        gamma (->>
                input
                (map #(Integer/parseUnsignedInt % 2))
-               (calc-gamma)
+               (calc-gamma num-bits 0)
+               binvec-to-uint
                )
-        epsilon (bit-and (bit-not gamma) 2r111111111111)]
+        epsilon (bit-and (bit-not gamma) (dec (pow 2 num-bits)))]
     (* gamma epsilon)
     )
   )
+
+;; Day 3.2
+(defn calc-support-value
+  [num-bits keep input]
+  (let [parsed (map #(Integer/parseUnsignedInt % 2) input)]
+    (loop [bits (range 0 (inc num-bits))
+           gamma (calc-gamma num-bits keep parsed)
+           rating input
+           i 0]
+      (if (or (= 1 (count rating)) (empty? bits))
+        (first rating)
+        (let [r (filter (fn [v] (= (first (str (nth gamma i))) (nth v i))) rating)]
+          (recur (drop 1 bits)
+                 (calc-gamma num-bits keep (map #(Integer/parseUnsignedInt % 2) r))
+                 r
+                 (inc i))
+          )))))
+
+(defn calc-life-support-rating
+  [input]
+  (let [num-bits (count (first input))
+        oxygen (Integer/parseUnsignedInt (calc-support-value num-bits 1 input) 2)
+        co2 (Integer/parseUnsignedInt (calc-support-value num-bits 0 input) 2)]
+    (* oxygen co2)
+    ))
 
 (defn -main
   "Advent of Code 2021."
@@ -137,6 +169,6 @@
     )
   (let [input (read-input "resources/input_3.txt")]
     (println "3.1 Power consumption = " (calc-power input))
-    ;; (println "2.2 horizontal position * depth = " (calc-aim input))
+    (println "3.2 Life support rating = " (calc-life-support-rating input))
     )
   )
