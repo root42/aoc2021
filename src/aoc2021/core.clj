@@ -156,6 +156,96 @@
     (* oxygen co2)
     ))
 
+;; Day 4.1
+(defn parse-board
+  [board-text]
+  (->> board-text
+       (map #(clojure.string/split % #" +"))
+       flatten
+       (filter not-empty)
+       (map #(Integer. % ))
+       vec
+       )
+  )
+
+(defn parse-bingo
+  [input]
+  (let [nums-text (first input)
+        boards-text (drop 1 input)
+        nums (map #(Integer. %) (re-seq #"[^,\n]+" nums-text))
+        boards (map parse-board (loop [bt (drop 1 boards-text) ; skip the one leading empty line
+                                       b []]
+                                  (if (empty? bt)
+                                    b
+                                    (recur (drop 6 bt) ; drop current board + empty line
+                                           (conj b (vec (take 5 bt))) ; take new board
+                                           ))))]
+    [nums boards]
+    )
+  )
+
+(defn mark-board
+  [n marks board ]
+  (let [x (.indexOf board n)]
+    (if (> x -1) (assoc marks x 1) marks)))
+
+(defn mark-boards
+  [n boards marks]
+  (loop [r (range 0 (count boards))
+         m []]
+    (if (empty? r)
+        m
+        (let [i (first r)] 
+          (recur (drop 1 r) (conj m (mark-board n (nth marks i) (nth boards i))))))))
+
+(defn bingo-row
+  [N i marks]
+  (let [num (reduce + (map #(nth marks %) (for [x (range 0 N)] (+ x (* i N)))))]
+    (if (= num N) true false)))
+
+(defn bingo-col
+  [N i marks]
+  (let [num (reduce + (map #(nth marks %) (for [x (range 0 N)] (+ i (* x N)))))]
+    (if (= num N) true false)))
+
+(defn bingo?
+  [N marks]
+  (loop [r (range 0 N)]
+    (if (empty? r)
+      false
+      (let [i (first r)]
+        (if (or (bingo-row N i marks) (bingo-col N i marks))
+          true
+          (recur (drop 1 r)))))))
+
+(defn filter-boards
+  [boards marks]
+  (loop [r (range 0 (count boards))
+         result []]
+    (if (empty? r)
+      result
+      (let [i (first r)]
+        (if (bingo? 5 (nth marks i))
+          (recur (drop 1 r) (conj result [(nth boards i) (nth marks i)]))
+          (recur (drop 1 r) result)
+          )))))
+
+(defn calc-score
+  [n [board marks]]
+  (* n (reduce + (map * board (map #(- 1 %) marks))))
+  )
+
+(defn calc-bingo-score
+  [nums boards]
+  boards
+  (loop [ns nums
+         n (first ns)
+         marks (repeat (count boards) (vec (repeat (count (first boards)) 0)))]
+    (let [marked (filter-boards boards marks)]
+      (if (> (count marked) 0)
+        (calc-score n (first marked))
+        (recur (drop 1 ns) (first ns) (mark-boards (first ns) boards marks))))))
+
 (defn -main
   "Advent of Code 2021."
   [& args]
@@ -170,5 +260,9 @@
   (let [input (read-input "resources/input_3.txt")]
     (println "3.1 Power consumption = " (calc-power input))
     (println "3.2 Life support rating = " (calc-life-support-rating input))
+    )
+  (let [input (read-input "resources/input_4.txt")
+        [nums boards] (parse-bingo input)]
+    (println "4.1 Final score = " (calc-bingo-score nums boards))
     )
   )
