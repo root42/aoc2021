@@ -221,13 +221,14 @@
 (defn filter-boards
   [boards marks]
   (loop [r (range 0 (count boards))
-         result []]
+         result []
+         rejects []]
     (if (empty? r)
-      result
+      [result rejects]
       (let [i (first r)]
         (if (bingo? 5 (nth marks i))
-          (recur (drop 1 r) (conj result [(nth boards i) (nth marks i)]))
-          (recur (drop 1 r) result)
+          (recur (drop 1 r) (conj result [(nth boards i) (nth marks i)]) rejects)
+          (recur (drop 1 r) result (conj rejects (nth boards i)))
           )))))
 
 (defn calc-score
@@ -236,15 +237,31 @@
   )
 
 (defn calc-bingo-score
-  [nums boards]
+  [f nums boards]
   boards
+  (if (empty? nums) nil)
   (loop [ns nums
          n (first ns)
          marks (repeat (count boards) (vec (repeat (count (first boards)) 0)))]
-    (let [marked (filter-boards boards marks)]
+    (let [[marked rejects] (filter-boards boards marks)]
       (if (> (count marked) 0)
-        (calc-score n (first marked))
+        [(calc-score n (f marked)) rejects]
         (recur (drop 1 ns) (first ns) (mark-boards (first ns) boards marks))))))
+
+(defn calc-last-bingo-score
+  [nums boards]
+  (loop [lb nil
+         bs boards]
+    (print ".")
+    (let [[result rejects] (calc-bingo-score last nums bs)]
+      (if (empty? rejects)
+        (do
+          (println)
+          result)
+        (recur result rejects))
+      )
+    )
+  )
 
 (defn -main
   "Advent of Code 2021."
@@ -263,6 +280,7 @@
     )
   (let [input (read-input "resources/input_4.txt")
         [nums boards] (parse-bingo input)]
-    (println "4.1 Final score = " (calc-bingo-score nums boards))
+    (println "4.1 Final score for first board = " (first (calc-bingo-score first nums boards)))
+    (println "4.2 Final score for last boad = " (calc-last-bingo-score nums boards))
     )
   )
