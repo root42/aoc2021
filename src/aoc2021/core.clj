@@ -171,18 +171,17 @@
 (defn parse-bingo
   [input]
   (let [nums-text (first input)
-        boards-text (drop 1 input)
+        boards-text (drop 2 input)
         nums (map #(Integer. %) (re-seq #"[^,\n]+" nums-text))
-        boards (map parse-board (loop [bt (drop 1 boards-text) ; skip the one leading empty line
-                                       b []]
-                                  (if (empty? bt)
-                                    b
-                                    (recur (drop 6 bt) ; drop current board + empty line
-                                           (conj b (vec (take 5 bt))) ; take new board
-                                           ))))]
-    [nums boards]
-    )
-  )
+        boards (map parse-board
+                    (loop [bt boards-text
+                           b []]
+                      (if (empty? bt)
+                        b
+                        (recur (drop 6 bt) ; drop current board + empty line
+                               (conj b (vec (take 5 bt))) ; take new board
+                               ))))]
+    [nums boards] ))
 
 (defn mark-board
   [n [board marks]]
