@@ -252,27 +252,21 @@
 
 (defn calc-first-bingo-score
   [nums only-boards]
-  (loop [boards []
-         bs only-boards]
-    (if (empty? bs)
-      (first (calc-bingo-score first nums boards))
-      (recur (conj boards [(first bs) (vec (repeat (count (first bs)) 0))]) (drop 1 bs)))))
+  (let [marks (vec (repeat (count only-boards) (vec (repeat (count (first only-boards)) 0))))
+        boards (map vector only-boards marks)]
+    (first (calc-bingo-score first nums boards))))
 
 (defn calc-last-bingo-score
   [nums only-boards]
-  (loop [boards []
-         obs only-boards]
-    (if (empty? obs)
-      (loop [res nil
-             ns nums
-             bs boards]
-        (let [[result ns2 rejects] (calc-bingo-score last ns bs)]
-          (if (empty? rejects)
-            result
-            (recur result ns2 rejects))
-          )
-        )
-      (recur (conj boards [(first obs) (vec (repeat (count (first obs)) 0))]) (drop 1 obs)))))
+  (let [marks (vec (repeat (count only-boards) (vec (repeat (count (first only-boards)) 0))))
+        boards (map vector only-boards marks)]
+    (loop [res nil
+           ns nums
+           bs boards]
+      (let [[result ns2 rejects] (calc-bingo-score last ns bs)]
+        (if (empty? rejects)
+          result
+          (recur result ns2 rejects))))))
 
 (defn -main
   "Advent of Code 2021."
