@@ -185,18 +185,21 @@
   )
 
 (defn mark-board
-  [n marks board ]
+  [n [board marks]]
   (let [x (.indexOf board n)]
-    (if (> x -1) (assoc marks x 1) marks)))
+    (if (> x -1)
+      [board (assoc marks x 1)]
+      [board marks])))
 
 (defn mark-boards
-  [n boards marks]
+  [n boards]
   (loop [r (range 0 (count boards))
          m []]
     (if (empty? r)
         m
-        (let [i (first r)] 
-          (recur (drop 1 r) (conj m (mark-board n (nth marks i) (nth boards i))))))))
+        (let [i (first r)
+              board (nth boards i)] 
+          (recur (drop 1 r) (conj m (mark-board n board)))))))
 
 (defn bingo-row
   [N i marks]
@@ -219,15 +222,16 @@
           (recur (drop 1 r)))))))
 
 (defn filter-boards
-  [boards marks]
+  [boards]
   (loop [r (range 0 (count boards))
          result []
          rejects []]
     (if (empty? r)
       [result rejects]
-      (let [i (first r)]
-        (if (bingo? 5 (nth marks i))
-          (recur (drop 1 r) (conj result [(nth boards i) (nth marks i)]) rejects)
+      (let [i (first r)
+            marks (second (nth boards i))]
+        (if (bingo? 5 marks)
+          (recur (drop 1 r) (conj result (nth boards i)) rejects)
           (recur (drop 1 r) result (conj rejects (nth boards i)))
           )))))
 
@@ -238,30 +242,37 @@
 
 (defn calc-bingo-score
   [f nums boards]
-  boards
-  (if (empty? nums) nil)
   (loop [ns nums
-         n (first ns)
-         marks (repeat (count boards) (vec (repeat (count (first boards)) 0)))]
-    (let [[marked rejects] (filter-boards boards marks)]
-      (if (> (count marked) 0)
-        [(calc-score n (f marked)) rejects]
-        (recur (drop 1 ns) (first ns) (mark-boards (first ns) boards marks))))))
+         n (first nums)
+         bs boards]
+    (let [[result rejects] (filter-boards bs)]
+      (if (> (count result) 0)
+        [(calc-score n (f result)) ns rejects]
+        (recur (drop 1 ns) (first ns) (mark-boards (first ns) bs))))))
+
+(defn calc-first-bingo-score
+  [nums only-boards]
+  (loop [boards []
+         bs only-boards]
+    (if (empty? bs)
+      (first (calc-bingo-score first nums boards))
+      (recur (conj boards [(first bs) (vec (repeat (count (first bs)) 0))]) (drop 1 bs)))))
 
 (defn calc-last-bingo-score
-  [nums boards]
-  (loop [lb nil
-         bs boards]
-    (print ".")
-    (let [[result rejects] (calc-bingo-score last nums bs)]
-      (if (empty? rejects)
-        (do
-          (println)
-          result)
-        (recur result rejects))
-      )
-    )
-  )
+  [nums only-boards]
+  (loop [boards []
+         obs only-boards]
+    (if (empty? obs)
+      (loop [res nil
+             ns nums
+             bs boards]
+        (let [[result ns2 rejects] (calc-bingo-score last ns bs)]
+          (if (empty? rejects)
+            result
+            (recur result ns2 rejects))
+          )
+        )
+      (recur (conj boards [(first obs) (vec (repeat (count (first obs)) 0))]) (drop 1 obs)))))
 
 (defn -main
   "Advent of Code 2021."
@@ -280,7 +291,7 @@
     )
   (let [input (read-input "resources/input_4.txt")
         [nums boards] (parse-bingo input)]
-    (println "4.1 Final score for first board = " (first (calc-bingo-score first nums boards)))
+    (println "4.1 Final score for first board = " (calc-first-bingo-score nums boards))
     (println "4.2 Final score for last boad = " (calc-last-bingo-score nums boards))
     )
   )
