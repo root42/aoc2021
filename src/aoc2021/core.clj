@@ -267,6 +267,62 @@
           result
           (recur result ns2 rejects))))))
 
+;; Day 5.1
+(defn parse-int-list
+  [list]
+  (->> list
+       (map #(Integer. %))))
+
+(defn parse-vent-data
+  [input]
+  (->> input
+       (map #(re-seq #"(.*),(.*) -> (.*),(.*)" %))
+       (map flatten)
+       (map #(drop 1 %))
+       (map parse-int-list))
+  )
+
+(defn horiz-or-vert?
+  [line]
+  (or (= (nth line 0) (nth line 2)) (= (nth line 1) (nth line 3))))
+
+(defn draw-line
+  [[x0 y0 x1 y1] vent-map]
+  (let [dist-x (Math/abs (- x0 x1))
+        dist-y (Math/abs (- y0 y1))
+        steep (> dist-y dist-x)]
+    (let [[x0 y0 x1 y1] (if steep [y0 x0 y1 x1] [x0 y0 x1 y1])]
+      (let [[x0 y0 x1 y1] (if (> x0 x1) [x1 y1 x0 y0] [x0 y0 x1 y1])]
+        (let  [dx (- x1 x0)
+               dy (Math/abs (- y0 y1))
+               y-step (if (< y0 y1) 1 -1)]
+          (let [plot (if steep 
+                       #(assoc %3 [%1 %2] (inc (get %3 [%1 %2] 0))) 
+                       #(assoc %3 [%2 %1] (inc (get %3 [%2 %1] 0))))]
+            (loop [vm vent-map
+                   x x0
+                   y y0
+                   error (Math/floor (/ dx 2)) ]
+              (if (<= x x1)
+                (if (< error dy) 
+                  (recur (plot x y vm) (inc x) (+ y y-step) (+ error (- dx dy)))
+                  (recur (plot x y vm) (inc x) y            (- error dy)))
+                vm))))))))
+
+(defn more-than-two?
+  [[coords amount]]
+  (>= amount 2))
+
+(defn calc-overlap-points
+  [input f]
+  (loop [lines (->> input
+                    parse-vent-data
+                    (filter f))
+         vent-map {}]
+    (if (empty? lines)
+      (count (filter more-than-two? vent-map))
+      (recur (drop 1 lines) (draw-line (first lines) vent-map)))))
+
 (defn -main
   "Advent of Code 2021."
   [& args]
@@ -286,5 +342,9 @@
         [nums boards] (parse-bingo input)]
     (println "4.1 Final score for first board = " (calc-first-bingo-score nums boards))
     (println "4.2 Final score for last boad = " (calc-last-bingo-score nums boards))
+    )
+  (let [input (read-input "resources/input_5.txt")]
+    (println "5.1 Points with at least two horizontal or vertical lines overlapping = " (calc-overlap-points input horiz-or-vert?))
+    (println "5.2 Points with at least two arbitrary lines overlapping = " (calc-overlap-points input any?))
     )
   )
