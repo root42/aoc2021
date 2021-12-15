@@ -323,6 +323,34 @@
       (count (filter more-than-two? vent-map))
       (recur (drop 1 lines) (draw-line (first lines) vent-map)))))
 
+;; Day 6.1
+(defn count-fish
+  [input]
+  (loop [fish {}
+         i input]
+    (if (empty? i)
+      fish
+      (recur (assoc fish (first i) (inc (get fish (first i) 0))) (drop 1 i)))))
+
+(defn breed-fish
+  [fish]
+  (loop [new-fish {}
+         ages (keys fish)]
+    (if (empty? ages)
+      new-fish
+      (let [age (first ages)
+            new-ages (if (= age 0) [6 8] [(dec age)])
+            next-gen (map vector new-ages (repeat (count new-ages) (get fish age)))]
+        (recur (reduce (fn [coll [k v]] (assoc coll k (+ v (get coll k 0)))) new-fish next-gen) (drop 1 ages))))))
+
+(defn calc-lantern-fish
+  [input days]
+  (loop [ds days
+         fish (count-fish input)]
+    (if (zero? ds)
+      (reduce + (map val fish))
+      (recur (dec ds) (breed-fish fish)))))
+
 (defn -main
   "Advent of Code 2021."
   [& args]
@@ -346,5 +374,9 @@
   (let [input (read-input "resources/input_5.txt")]
     (println "5.1 Points with at least two horizontal or vertical lines overlapping = " (calc-overlap-points input horiz-or-vert?))
     (println "5.2 Points with at least two arbitrary lines overlapping = " (calc-overlap-points input any?))
+    )
+  (let [input (read-input-csv "resources/input_6.txt")]
+    (println "6.1 Lantern fish after 80 days = " (calc-lantern-fish input 80))
+    (println "6.2 Lantern fish after 256 days = " (calc-lantern-fish input 256))
     )
   )
