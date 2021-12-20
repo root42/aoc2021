@@ -351,6 +351,37 @@
       (reduce + (map val fish))
       (recur (dec ds) (breed-fish fish)))))
 
+;; Day 7.1
+(defn calc-crab-fuel-linear
+  [xs x]
+  (reduce + (map #(Math/abs (- x %)) xs))
+  )
+
+(defn calc-crab-fuel-median
+  [input]
+  (->> input
+       sort
+       (drop (/ (count input) 2))
+       first
+       (calc-crab-fuel-linear input))
+  )
+
+;; Day 7.2
+(defn sum-i-to-N
+  [N]
+  (/ (* N (inc N)) 2))
+
+(defn calc-crab-fuel-quadratic
+  [xs x]
+  (println x)
+  (reduce + (map (fn [N] (sum-i-to-N (Math/abs (- x N)))) xs))
+  )
+
+(defn calc-crab-fuel-mean
+  [input]
+  (calc-crab-fuel-quadratic input (quot (reduce + input) (count input)))
+  )
+
 (defn -main
   "Advent of Code 2021."
   [& args]
@@ -378,5 +409,9 @@
   (let [input (read-input-csv "resources/input_6.txt")]
     (println "6.1 Lantern fish after 80 days = " (calc-lantern-fish input 80))
     (println "6.2 Lantern fish after 256 days = " (calc-lantern-fish input 256))
+    )
+  (let [input (read-input-csv "resources/input_7.txt")]
+    (println "7.1 Fuel for crab submarines = " (calc-crab-fuel-median input))
+    (println "7.2 Fuel for crab submarines = " (calc-crab-fuel-mean input))
     )
   )
