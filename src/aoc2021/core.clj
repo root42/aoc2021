@@ -9,7 +9,7 @@
 (defn read-input
   [input-file]
   (let [input (slurp input-file)]
-    (apply vector (clojure.string/split-lines input)))
+    (clojure.string/split-lines input))
   )
 
 (defn read-integer-input
@@ -21,7 +21,7 @@
 (defn read-input-csv
   [input-file]
   (let [input (slurp input-file)]
-    (map #(Integer. %) (re-seq #"[^,\n]+" input)))
+    (apply vector (map #(Integer. %) (re-seq #"[^,\n]+" input))))
   )
 
 ;; day 1
@@ -31,7 +31,7 @@
    input
    (partition 2 1)
    (filter (fn [[x y]] (> y x)))
-   (count)
+   count
    )
   )
 
@@ -41,7 +41,7 @@
    input
    (partition 3 1)
    (map #(apply + %))
-   (calc-increases)
+   calc-increases
    )
   )
 
@@ -57,14 +57,8 @@
                  "forward" [(+ x v) d]
                  "down" [x (+ d v)]
                  "up" [x (- d v)]
-                 )
-               )
-             )
-           [0 0]
-           )
-   (apply (fn [x d] (* x d)))
-   )
-  )
+                 ))) [0 0])
+   (apply (fn [x d] (* x d)))))
 
 (defn calc-aim
   [input]
@@ -77,14 +71,8 @@
                  "forward" [aim (+ x v) (+ d (* aim v))]
                  "down" [(+ aim v) x d]
                  "up" [(- aim v) x d]
-                 )
-               )
-             )
-           [0 0 0]
-           )
-   (apply (fn [aim x d] (* x d)))
-   )
-  )
+                 ))) [0 0 0])
+   (apply (fn [aim x d] (* x d)))))
 
 ;; Day 3.1
 (defn add-digit
@@ -92,8 +80,7 @@
   (->>
    input
    (map #(bit-and 1 (bit-shift-right % n)))
-   (reduce +))
-  )
+   (reduce +)))
 
 (defn calc-gamma
   "Calculates the gamma value and returns it as a vector of 1s and 0s."
@@ -110,8 +97,7 @@
 (defn binvec-to-uint
   "Converts a vector of 1s and 0s to an unsigned integer"
   [v]
-  (Integer/parseUnsignedInt (apply str v) 2)
-  )
+  (Integer/parseUnsignedInt (apply str v) 2))
 
 (defn pow
   [x n]
@@ -127,9 +113,7 @@
                binvec-to-uint
                )
         epsilon (bit-and (bit-not gamma) (dec (pow 2 num-bits)))]
-    (* gamma epsilon)
-    )
-  )
+    (* gamma epsilon)))
 
 ;; Day 3.2
 (defn calc-support-value
@@ -145,16 +129,14 @@
           (recur (drop 1 bits)
                  (calc-gamma num-bits keep (map #(Integer/parseUnsignedInt % 2) r))
                  r
-                 (inc i))
-          )))))
+                 (inc i)))))))
 
 (defn calc-life-support-rating
   [input]
   (let [num-bits (count (first input))
         oxygen (Integer/parseUnsignedInt (calc-support-value num-bits 1 input) 2)
         co2 (Integer/parseUnsignedInt (calc-support-value num-bits 0 input) 2)]
-    (* oxygen co2)
-    ))
+    (* oxygen co2)))
 
 ;; Day 4.1
 (defn parse-board
@@ -165,8 +147,7 @@
        (filter not-empty)
        (map #(Integer. % ))
        vec
-       )
-  )
+       ))
 
 (defn parse-bingo
   [input]
@@ -373,9 +354,7 @@
 
 (defn calc-crab-fuel-quadratic
   [xs x]
-  (println x)
-  (reduce + (map (fn [N] (sum-i-to-N (Math/abs (- x N)))) xs))
-  )
+  (reduce + (map (fn [N] (sum-i-to-N (Math/abs (- x N)))) xs)))
 
 (defn calc-crab-fuel-mean
   [input]
